@@ -51,20 +51,24 @@ This approach makes the output substantially more useful for academic workflows,
 
 ### 1) Clone the repository
 ```git clone https://github.com/Labic-ICMC-USP/SemanticDiff.git
-cd SemanticDiff```
+cd SemanticDiff
+```
 
 ### 2) Create and activate a virtual environment (recommended)
 ```python -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip```
+python -m pip install --upgrade pip
+```
 
 ### 3A) Regular install (recommended for users)
 ```pip install -r requirements.txt
-pip install .```
+pip install .
+```
 
 ### 3B) Editable install (recommended for development)
 ```pip install -r requirements.txt
-pip install -e .```
+pip install -e .
+```
 
 
 ## Configure
