@@ -49,6 +49,8 @@ def extract_first_json_object(text: str) -> str:
     Handles markdown code fences and extra text.
     """
     t = text.strip()
+    t = t.replace("```json", "```")
+    t = t.replace("```", "")
     t = re.sub(r"^```(?:json)?\s*", "", t)
     t = re.sub(r"\s*```$", "", t)
 
