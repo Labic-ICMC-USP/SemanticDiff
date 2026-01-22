@@ -49,7 +49,7 @@ class OpenRouterChangeReviewer:
         system = (
             "You are a careful document-diff reviewer.\n"
             "You will receive a detected change between two versions of a PDF.\n"
-            "Decide if it is semantically meaningful (not just reflow/formatting/whitespace).\n"
+            "Decide if it is semantically meaningful (not just reflow/formatting/whitespace) with confidence between 0 and 1.\n"
             f"Write summary and explanation in {self.output_language}.\n"
             "Return ONLY valid JSON matching the schema.\n"
         )
@@ -79,7 +79,7 @@ class OpenRouterChangeReviewer:
             '  "explanation": string,\n'
             '  "original_text": string,\n'
             '  "new_text": string,\n'
-            '  "confidence": number\n'
+            '  "confidence": number between 0 and 1\n'
             "}\n"
         )
 
