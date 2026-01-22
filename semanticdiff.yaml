@@ -1,0 +1,38 @@
+project:
+  base_pdf: "original.pdf"
+  test_pdf: "updated.pdf"
+  output_dir: "comparison_output"
+
+llm:
+  provider: "openrouter"
+  api_key_env: "API-KEY" # change for local llms
+  api_key: "API-KEY" # change for local llms
+  base_url: "https://openrouter.ai/api/v1"  # change for local llms (e.g. localhost)
+  model: "qwen/qwen3-30b-a3b-instruct-2507"
+  site_url: "https://agents4gov.icmc.usp.br" # change
+  site_name: "SemanticDiff"
+  output_language: "Portuguese"
+  timeout_sec: 90
+  max_retries: 2
+
+diff:
+  ignore_repeated_header_footer: true
+  header_pct: 0.10
+  footer_pct: 0.10
+  repeat_ratio: 0.30
+  anchor_min_len: 10
+  relocation_window: 40
+  replace_sim_threshold: 0.995
+
+highlight:
+  merge_rects: true
+  fill_opacity: 0.18
+  stroke_opacity: 0.70
+  border_width: 1.2
+
+report:
+  title: "LLM Diff Report"
+  truncate_chars: 4000
+
+runtime:
+  verbose: true
