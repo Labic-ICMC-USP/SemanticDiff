@@ -5,10 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "semanticdiff"
 version = "0.1.0"
-description = "Reflow-resistant PDF semantic diff with highlights + LLM report (OpenRouter)."
+description = "PDF semantic diff with highlights + LLM report."
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
 authors = [{name="SemanticDiff"}]
 dependencies = [
   "PyMuPDF>=1.23.0",
@@ -20,3 +19,7 @@ dependencies = [
 
 [project.scripts]
 semanticdiff = "semanticdiff.cli:main"
+
+
+[tool.setuptools]
+packages = { find = { include = ["semanticdiff*"], exclude = ["comparison_output*", "tests*", "docs*"] } }
