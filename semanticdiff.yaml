@@ -1,28 +1,33 @@
 project:
   base_pdf: "original.pdf"
-  test_pdf: "updated.pdf"
-  output_dir: "comparison_output"
-
-llm:
-  provider: "openrouter"
-  api_key_env: "API-KEY" # change for local llms
-  api_key: "API-KEY" # change for local llms
-  base_url: "https://openrouter.ai/api/v1"  # change for local llms (e.g. localhost)
-  model: "qwen/qwen3-30b-a3b-instruct-2507"
-  site_url: "https://agents4gov.icmc.usp.br" # change
-  site_name: "SemanticDiff"
-  output_language: "Portuguese"
-  timeout_sec: 90
-  max_retries: 2
+  test_pdf: "modificado.pdf"
+  output_dir: "comparison_output5"
 
 diff:
   ignore_repeated_header_footer: true
-  header_pct: 0.10
-  footer_pct: 0.10
-  repeat_ratio: 0.30
-  anchor_min_len: 10
-  relocation_window: 40
-  replace_sim_threshold: 0.995
+  header_pct: 0.20
+  footer_pct: 0.20
+  repeat_ratio: 0.2
+  anchor_min_len: 50
+  relocation_window: 250
+  replace_sim_threshold: 0.95
+  watermark_texts:
+    - "DRAFT"
+    - "CONFIDENTIAL"
+    - "COPY FOR REVIEW"
+    - "PRÉVIA"
+    - "PREVIA"
+    - "DRAFT"
+    - "RASCUNHO"
+  watermark_case_sensitive: false
+  ignore_margin_patterns:
+    - '^Emitido por:\s*.*$'
+    - '^\d+\s*/\s*\d+$'
+    - '^Submetido por:\s*.*$'
+    - '^Assinado por:\s*.*$'
+  margin_patterns_case_sensitive: false
+  margin_patterns_only_in_header_footer: true
+
 
 highlight:
   merge_rects: true
@@ -32,7 +37,20 @@ highlight:
 
 report:
   title: "LLM Diff Report"
-  truncate_chars: 4000
+  truncate_chars: 10000
 
 runtime:
   verbose: true
+
+
+llm:
+  provider: "openrouter"
+  api_key_env: "xxx"
+  api_key: "xxx"
+  base_url: "https://openrouter.ai/api/v1"
+  model: "google/gemini-2.5-flash"
+  site_url: "https://agents4gov.icmc.usp.br"
+  site_name: "SemanticDiff"
+  output_language: "Portuguese"
+  timeout_sec: 90
+  max_retries: 2
