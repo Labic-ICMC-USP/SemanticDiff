@@ -45,11 +45,16 @@ def run_from_config(cfg: SemanticDiffConfig) -> str:
         anchor_min_len=cfg.diff.anchor_min_len,
         relocation_window=cfg.diff.relocation_window,
         replace_sim_threshold=cfg.diff.replace_sim_threshold,
+        watermark_texts=cfg.diff.watermark_texts,
+        watermark_case_sensitive=cfg.diff.watermark_case_sensitive,
         merge_rects=cfg.highlight.merge_rects,
         fill_opacity=cfg.highlight.fill_opacity,
         stroke_opacity=cfg.highlight.stroke_opacity,
         border_width=cfg.highlight.border_width,
         verbose=cfg.runtime.verbose,
+        ignore_margin_patterns=cfg.diff.ignore_margin_patterns,
+        margin_patterns_case_sensitive=cfg.diff.margin_patterns_case_sensitive,
+        margin_patterns_only_in_header_footer=cfg.diff.margin_patterns_only_in_header_footer,
     )
 
     merge_side_by_side_vector(highlighted_base, highlighted_test, side_by_side_pdf)
@@ -63,6 +68,7 @@ def run_from_config(cfg: SemanticDiffConfig) -> str:
         output_language=cfg.llm.output_language,
         timeout_sec=cfg.llm.timeout_sec,
         max_retries=cfg.llm.max_retries,
+        ignored_text_fragments=cfg.diff.watermark_texts,
         verbose=cfg.runtime.verbose,
     )
 
@@ -72,6 +78,7 @@ def run_from_config(cfg: SemanticDiffConfig) -> str:
 
     save_llm_report_pdf(
         assessments,
+        changes,
         report_pdf,
         title=cfg.report.title,
         truncate_chars=cfg.report.truncate_chars,

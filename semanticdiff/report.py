@@ -25,6 +25,7 @@ def _escape_for_rl(s: str, truncate_chars: int = 4000) -> str:
 
 def save_llm_report_pdf(
     assessments: List[LLMChangeAssessment],
+    changes,
     out_pdf_path: str,
     *,
     title: str = "LLM Diff Report",
@@ -44,7 +45,7 @@ def save_llm_report_pdf(
     story.append(Paragraph(f"<b>Ignored:</b> {len(not_meaningful)}", styles["Normal"]))
     story.append(PageBreak())
 
-    for i, a in enumerate(assessments, start=1):
+    for i, (a, ch) in enumerate(zip(assessments, changes), start=1):
         story.append(
             Paragraph(
                 f"<b>Change #{i}</b> — <b>Type:</b> {a.change_type} — "
@@ -58,19 +59,24 @@ def save_llm_report_pdf(
         story.append(Paragraph(f"<b>Explanation:</b> {a.explanation}", styles["Normal"]))
         story.append(Spacer(1, 0.3 * cm))
 
-        if a.original_text:
-            story.append(Paragraph("<b>Original text:</b>", styles["Normal"]))
-            story.append(
-                Paragraph(f"<font name='Courier'>{_escape_for_rl(a.original_text, truncate_chars)}</font>", styles["BodyText"])
-            )
-            story.append(Spacer(1, 0.2 * cm))
+        # if a.original_text:
+        #     story.append(Paragraph("<b>Original text:</b>", styles["Normal"]))
+        #     story.append(
+        #         Paragraph(f"<font name='Courier'>{_escape_for_rl(a.original_text, truncate_chars)}</font>", styles["BodyText"])
+        #     )
+        #     story.append(Spacer(1, 0.2 * cm))
 
-        if a.new_text:
-            story.append(Paragraph("<b>New text:</b>", styles["Normal"]))
-            story.append(
-                Paragraph(f"<font name='Courier'>{_escape_for_rl(a.new_text, truncate_chars)}</font>", styles["BodyText"])
-            )
-            story.append(Spacer(1, 0.2 * cm))
+        # if a.new_text:
+        #     story.append(Paragraph("<b>New text:</b>", styles["Normal"]))
+        #     story.append(
+        #         Paragraph(f"<font name='Courier'>{_escape_for_rl(a.new_text, truncate_chars)}</font>", styles["BodyText"])
+        #     )
+        #     story.append(Spacer(1, 0.2 * cm))
+
+        base_pages = ", ".join(str(p + 1) for p in ch.base_pages) or "-"
+        test_pages = ", ".join(str(p + 1) for p in ch.test_pages) or "-"
+        story.append(Paragraph(f"<b>Original PDF page number:</b> {base_pages}", styles["Normal"]))
+        story.append(Paragraph(f"<b>Modified PDF page number:</b> {test_pages}", styles["Normal"]))
 
         story.append(PageBreak())
 

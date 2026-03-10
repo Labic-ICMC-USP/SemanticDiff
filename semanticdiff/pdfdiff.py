@@ -19,7 +19,15 @@ from difflib import SequenceMatcher
 import fitz  # PyMuPDF
 
 from .models import DetectedChange
-from .utils import norm_text, norm_key, norm_key_header_footer, simplify_for_noise_check
+from .utils import (
+    norm_text,
+    norm_key,
+    norm_key_header_footer,
+    simplify_for_noise_check,
+    strip_configured_fragments,
+    matches_any_regex,
+)
+
 
 
 @dataclass
@@ -31,7 +39,17 @@ class Unit:
     key: str
 
 
-def _iter_text_lines_sorted(page: fitz.Page):
+def _iter_text_lines_sorted(
+    page: fitz.Page,
+    *,
+    watermark_texts: Optional[List[str]] = None,
+    watermark_case_sensitive: bool = False,
+    ignore_margin_patterns: Optional[List[str]] = None,
+    margin_patterns_case_sensitive: bool = False,
+    margin_patterns_only_in_header_footer: bool = True,
+    header_pct: float = 0.10,
+    footer_pct: float = 0.10,
+):
     """
     Extract lines from page.get_text("dict") with a stable reading order:
     - sort blocks by (y0, x0)
@@ -66,13 +84,49 @@ def _iter_text_lines_sorted(page: fitz.Page):
             spans.sort(key=span_key)
 
             text = "".join(sp.get("text", "") for sp in spans)
+            # text = norm_text(text)
+            # if not text:
+            #     continue
+
             text = norm_text(text)
+            text = strip_configured_fragments(
+                text,
+                watermark_texts,
+                case_sensitive=watermark_case_sensitive,
+            )
             if not text:
                 continue
-            yield fitz.Rect(ln["bbox"]), text
+
+            line_rect = fitz.Rect(ln["bbox"])
+            ph = page.rect.height
+
+            in_header_or_footer = (
+                line_rect.y1 <= ph * header_pct
+                or line_rect.y0 >= ph * (1.0 - footer_pct)
+            )
+
+            if ignore_margin_patterns and matches_any_regex(
+                text,
+                ignore_margin_patterns,
+                case_sensitive=margin_patterns_case_sensitive,
+            ):
+                if in_header_or_footer or not margin_patterns_only_in_header_footer:
+                    continue
+
+            yield line_rect, text
 
 
-def extract_units_wrapped(doc: fitz.Document) -> List[Unit]:
+def extract_units_wrapped(
+    doc: fitz.Document,
+    *,
+    watermark_texts: Optional[List[str]] = None,
+    watermark_case_sensitive: bool = False,
+    ignore_margin_patterns: Optional[List[str]] = None,
+    margin_patterns_case_sensitive: bool = False,
+    margin_patterns_only_in_header_footer: bool = True,
+    header_pct: float = 0.10,
+    footer_pct: float = 0.10,
+) -> List[Unit]:
     """
     Build reflow-resistant 'wrapped line' units:
     - merges consecutive lines when they look like hard wraps (not paragraph breaks)
@@ -100,7 +154,16 @@ def extract_units_wrapped(doc: fitz.Document) -> List[Unit]:
 
         prev_text = None
 
-        for rect, text in _iter_text_lines_sorted(page):
+        for rect, text in _iter_text_lines_sorted(
+            page,
+            watermark_texts=watermark_texts,
+            watermark_case_sensitive=watermark_case_sensitive,
+            ignore_margin_patterns=ignore_margin_patterns,
+            margin_patterns_case_sensitive=margin_patterns_case_sensitive,
+            margin_patterns_only_in_header_footer=margin_patterns_only_in_header_footer,
+            header_pct=header_pct,
+            footer_pct=footer_pct,
+        ):
             # Bullet/numbered lines: keep separate
             is_bullet = bool(re.match(r"^(\•|\-|\–|\—|\d+\.)\s+", text))
 
@@ -394,6 +457,8 @@ def highlight_and_collect_changes(
     anchor_min_len: int = 10,
     relocation_window: int = 40,
     replace_sim_threshold: float = 0.995,
+    watermark_texts: Optional[List[str]] = None,
+    watermark_case_sensitive: bool = False,
     # highlight tuning:
     merge_rects: bool = True,
     fill_opacity: float = 0.18,
@@ -404,6 +469,9 @@ def highlight_and_collect_changes(
     color_delete: Tuple[float, float, float] = (1.0, 0.0, 0.0),
     color_replace: Tuple[float, float, float] = (1.0, 0.55, 0.0),
     verbose: bool = True,
+    ignore_margin_patterns: Optional[List[str]] = None,
+    margin_patterns_case_sensitive: bool = False,
+    margin_patterns_only_in_header_footer: bool = True,
 ) -> List[DetectedChange]:
     """Highlight both PDFs and return a list of detected changes for LLM review."""
     base_doc = fitz.open(base_pdf_path)
@@ -411,11 +479,31 @@ def highlight_and_collect_changes(
 
     if verbose:
         print("[INFO] Extracting wrapped units (base)...")
-    base_units_all = extract_units_wrapped(base_doc)
+    base_units_all = extract_units_wrapped(
+        base_doc,
+        watermark_texts=watermark_texts,
+        watermark_case_sensitive=watermark_case_sensitive,
+        ignore_margin_patterns=ignore_margin_patterns,
+        margin_patterns_case_sensitive=margin_patterns_case_sensitive,
+        margin_patterns_only_in_header_footer=margin_patterns_only_in_header_footer,
+        header_pct=header_pct,
+        footer_pct=footer_pct,
+    )
 
     if verbose:
         print("[INFO] Extracting wrapped units (test)...")
-    test_units_all = extract_units_wrapped(test_doc)
+    test_units_all = extract_units_wrapped(
+        test_doc,
+        watermark_texts=watermark_texts,
+        watermark_case_sensitive=watermark_case_sensitive,
+        ignore_margin_patterns=ignore_margin_patterns,
+        margin_patterns_case_sensitive=margin_patterns_case_sensitive,
+        margin_patterns_only_in_header_footer=margin_patterns_only_in_header_footer,
+        header_pct=header_pct,
+        footer_pct=footer_pct,
+    )
+    if verbose and watermark_texts:
+        print(f"[INFO] Watermark suppression enabled for {len(watermark_texts)} configured fragment(s)")
 
     if ignore_repeated_header_footer:
         if verbose:

@@ -30,6 +30,7 @@ class OpenRouterChangeReviewer:
         output_language: str = "Portuguese",
         timeout_sec: float = 90.0,
         max_retries: int = 2,
+        ignored_text_fragments: Optional[list[str]] = None,
         verbose: bool = True,
     ):
         self.client = OpenAI(base_url=base_url, api_key=api_key, timeout=timeout_sec, max_retries=max_retries)
@@ -37,6 +38,7 @@ class OpenRouterChangeReviewer:
         self.site_url = site_url
         self.site_name = site_name
         self.output_language = output_language
+        self.ignored_text_fragments = [t for t in (ignored_text_fragments or []) if t]
         self.verbose = verbose
 
     def review(self, change: DetectedChange, idx: int) -> LLMChangeAssessment:
@@ -53,6 +55,13 @@ class OpenRouterChangeReviewer:
             f"Write summary and explanation in {self.output_language}.\n"
             "Return ONLY valid JSON matching the schema.\n"
         )
+        if self.ignored_text_fragments:
+            ignored = "\n".join(f"- {t}" for t in self.ignored_text_fragments[:20])
+            system += (
+                "If the detected difference is caused only by configured watermark text, treat it as NOT meaningful.\n"
+                "Configured watermark fragments:\n"
+                f"{ignored}\n"
+            )
 
         user = (
             f"CHANGE #{idx}\n"
@@ -85,6 +94,7 @@ class OpenRouterChangeReviewer:
 
         if self.verbose:
             print(f"[LLM] Reviewing change {idx} ({change.change_type})...")
+            print(user)
 
         completion = self.client.chat.completions.create(
             extra_headers=headers or None,
@@ -96,6 +106,7 @@ class OpenRouterChangeReviewer:
         )
 
         content = completion.choices[0].message.content or ""
+        print("content = ",content)
 
         try:
             j = extract_first_json_object(content)

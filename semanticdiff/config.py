@@ -53,6 +53,17 @@ class DiffConfig(BaseModel):
     anchor_min_len: int = 10
     relocation_window: int = 40
     replace_sim_threshold: float = 0.995
+    watermark_texts: list[str] = Field(default_factory=list)
+    watermark_case_sensitive: bool = False
+
+    ignore_margin_patterns: list[str] = Field(
+        default_factory=lambda: [
+            r"^Emitido por:\s*.*$",
+            r"^\d+\s*/\s*\d+$",
+        ]
+    )
+    margin_patterns_case_sensitive: bool = False
+    margin_patterns_only_in_header_footer: bool = True
 
 
 class HighlightConfig(BaseModel):
