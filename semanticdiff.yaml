@@ -1,7 +1,7 @@
 project:
   base_pdf: "original.pdf"
   test_pdf: "modificado.pdf"
-  output_dir: "comparison_output5"
+  output_dir: "comparison_output"
 
 diff:
   ignore_repeated_header_footer: true
